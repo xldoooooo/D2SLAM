@@ -1,7 +1,7 @@
 # FROM nvidia/cuda:11.6.1-cudnn8-devel-ubuntu20.04
 FROM nvcr.io/nvidia/tensorrt:23.04-py3
 ARG CERES_VERSION=2.1.0
-ARG CMAKE_VERSION=3.23.1
+ARG CMAKE_VERSION=3.24.1
 ARG ONNX_VERSION=1.18.0
 ARG OPENCV_VERSION=4.10.0
 ENV SWARM_WS=/root/swarm_ws
@@ -20,9 +20,7 @@ RUN  apt-get -y update && \
       libglib2.0-dev \
       libyaml-cpp-dev \
       libdw-dev \
-      lsb-release \
       vim \
-      curl \
       ca-certificates \
       htop \
       xterm \
@@ -30,33 +28,26 @@ RUN  apt-get -y update && \
       build-essential \
       net-tools \
       htop \
-      xterm \
-      gdb \
       zip \
       unzip
 
 #ROS
-RUN sh -c 'echo "deb http://mirrors.ustc.edu.cn/ros/ubuntu/ `lsb_release -cs` main" > /etc/apt/sources.list.d/ros-latest.list' && \
+RUN sh -c 'echo "deb http://mirrors.ustc.edu.cn/ros/ubuntu/ focal main" > /etc/apt/sources.list.d/ros-latest.list' && \
       curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
-      apt-get update && \
-      apt-get install -y  --no-install-recommends \
-      ros-${ROS_VERSION}-ros-base \
-      ros-${ROS_VERSION}-nav-msgs \
-      ros-${ROS_VERSION}-sensor-msgs \
-      ros-${ROS_VERSION}-cv-bridge \
-      ros-${ROS_VERSION}-rviz \
-      ros-${ROS_VERSION}-image-transport-plugins \
-      ros-${ROS_VERSION}-pcl-ros \
-      build-essential \
-      libdw-dev \
-      ros-${ROS_VERSION}-catkin \
-      python3-catkin-tools python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential && \
+      apt update && \
+      apt install -y  --no-install-recommends \
+      ros-${ROS_VERSION}-ros-base && \
+      apt install -y ros-${ROS_VERSION}-cv-bridge && \
+      apt install -y ros-${ROS_VERSION}-rviz && \
+      apt install -y ros-${ROS_VERSION}-image-transport-plugins && \
+      apt install -y ros-${ROS_VERSION}-pcl-ros && \
+      apt install -y python3-catkin-tools python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool && \
       rosdep init && rosdep update
 
 
 #Replace CMAKE
 RUN   rm /usr/bin/cmake && \
-      wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-Linux-x86_64.sh \
+      wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-Linux-x86_64.sh \
       -q -O /tmp/cmake-install.sh \
       && chmod u+x /tmp/cmake-install.sh \
       && /tmp/cmake-install.sh --skip-license --prefix=/usr/ \
@@ -68,23 +59,19 @@ RUN   git clone https://github.com/HKUST-Swarm/ceres-solver -b D2SLAM && \
       cd ceres-solver && \
       mkdir build && cd build && \
       cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_BENCHMARKS=OFF .. && \
-      make -j$(nproc) install && \
+      make -j7 install && \
       rm -rf ../../ceres-solver && \
       apt-get clean all
 
-RUN   wget https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/onnxruntime-linux-x64-gpu-cuda12-${ONNX_VERSION}.tgz -O onnxruntime.tgz  && \
+#Install onnx
+RUN   wget https://github.com/microsoft/onnxruntime/releases/download/v1.18.0/onnxruntime-linux-x64-gpu-cuda12-1.18.0.tgz -O onnxruntime.tgz  && \
       tar -zxvf onnxruntime.tgz && \
-      cp -r onnxruntime-linux-x64-gpu-${ONNX_VERSION}/include/* /usr/local/include/ && \
-      cp -r onnxruntime-linux-x64-gpu-${ONNX_VERSION}/lib/* /usr/local/lib/ && \
-      rm -rf onnxruntime-linux-x64-gpu-${ONNX_VERSION} && \
+      cp -r onnxruntime-linux-x64-gpu-1.18.0/include/* /usr/local/include/ && \
+      cp -r onnxruntime-linux-x64-gpu-1.18.0/lib/* /usr/local/lib/ && \
+      rm -rf onnxruntime-linux-x64-gpu-1.18.0 && \
       rm onnxruntime.tgz
 
 #Install Libtorch (CUDA)
-# RUN   wget https://download.pytorch.org/libtorch/cpu/libtorch-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip && \
-#       unzip libtorch-shared-with-deps-${LIBTORCH_VERSION}+cpu.zip && \
-#       rm libtorch-shared-with-deps-${LIBTORCH_VERSION}+cpu.zip && \
-#       cp -r libtorch/* /usr/local/
-
 RUN   wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcpu.zip && \
       unzip libtorch-cxx11-abi-shared-with-deps-2.0.1+cpu.zip && \
       rm libtorch-cxx11-abi-shared-with-deps-2.0.1+cpu.zip && \
@@ -97,25 +84,25 @@ RUN   git clone https://github.com/lcm-proj/lcm && \
       git checkout tags/v1.4.0 && \
       mkdir build && cd build && \
       cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_BENCHMARKS=OFF .. && \
-      make -j$(nproc) install && \
+      make -j7 install && \
       pip install lcm
 
 #Install Faiss
-RUN   git clone -b v${FAISS_VERSION} --single-branch  https://github.com/facebookresearch/faiss.git && \
+RUN   git clone -b v1.7.4 --single-branch  https://github.com/facebookresearch/faiss.git && \
       cd faiss && \
       cmake -B build -DCMAKE_BUILD_TYPE=Release -DFAISS_OPT_LEVEL=avx2 -DFAISS_ENABLE_PYTHON=OFF -DBUILD_TESTING=OFF -DFAISS_ENABLE_GPU=OFF . && \
-      make -C build -j$(nproc) faiss && \
+      make -C build -j7 faiss && \
       make -C build install && \
       rm -rf ../faiss
 
 #Install OpenCV4 with CUDA
 RUN   apt update && \
       apt install libgtk2.0-dev -y && \
-      wget https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip -O opencv.zip && \
+      wget https://github.com/opencv/opencv/archive/4.10.0.zip -O opencv.zip && \
       unzip opencv.zip && \
       rm opencv.zip && \
-      git clone https://github.com/opencv/opencv_contrib.git -b ${OPENCV_VERSION}
-RUN   cd opencv-${OPENCV_VERSION} && \
+      git clone https://github.com/opencv/opencv_contrib.git -b 4.10.0
+RUN   cd opencv-4.10.0 && \
       mkdir build && cd build && \
       cmake .. \
             -D CMAKE_BUILD_TYPE=RELEASE \
@@ -137,7 +124,7 @@ RUN   cd opencv-${OPENCV_VERSION} && \
 cudev,cudaoptflow,cudaimgproc,cudalegacy,cudaarithm,cudacodec,cudastereo,\
 cudafeatures2d,xfeatures2d,tracking,stereo,\
 aruco,videoio,ccalib && \
-      make -j$(nproc) && \
+      make -j7 && \
       make install 
 
 #Install OpenGV
@@ -155,7 +142,7 @@ RUN   wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo a
       apt install vulkan-sdk -y
 
 #Install taichi
-RUN    pip install taichi transformations numpy lcm matplotlib scipy && apt install ros-${ROS_VERSION}-ros-numpy
+RUN    pip install taichi transformations numpy lcm matplotlib scipy && apt install ros-noetic-ros-numpy
 
 #Install spdlog
 RUN   wget https://github.com/gabime/spdlog/archive/refs/tags/v1.12.0.tar.gz && \
@@ -166,14 +153,14 @@ RUN   wget https://github.com/gabime/spdlog/archive/refs/tags/v1.12.0.tar.gz && 
       make install
 
 #Build D2SLAM
-RUN   mkdir -p ${SWARM_WS}/src/ && \
-      cd ${SWARM_WS}/src/ && \
+RUN   mkdir -p /root/swarm_ws/src/ && \
+      cd /root/swarm_ws/src/ && \
       git clone https://github.com/HKUST-Swarm/swarm_msgs.git -b D2SLAM && \
       git clone https://github.com/HKUST-Swarm/sync_bag_player.git && \
-      git clone https://github.com/ros-perception/vision_opencv.git -b ${ROS_VERSION}
-COPY ./ ${SWARM_WS}/src/D2SLAM
-WORKDIR $SWARM_WS
-RUN   source "/opt/ros/${ROS_VERSION}/setup.bash" && \
+      git clone https://github.com/ros-perception/vision_opencv.git -b noetic
+COPY ./ /root/swarm_ws/src/D2SLAM
+WORKDIR /root/swarm_ws
+RUN   source "/opt/ros/noetic/setup.bash" && \
       catkin config -DCMAKE_BUILD_TYPE=Release \
             --cmake-args -DONNXRUNTIME_LIB_DIR=/usr/local/lib \
             -DONNXRUNTIME_INC_DIR=/usr/local/include -DUSE_CUDA=On&& \
