@@ -16,17 +16,16 @@
 #include "sensor_msgs/Imu.h"
 
 using namespace std::chrono;
+using namespace D2VINS;
+using namespace D2Common;
+
 #define BACKWARD_HAS_DW 1
 #include <backward.hpp>
 namespace backward {
 backward::SignalHandling sh;
 }
 
-using namespace D2VINS;
-using namespace D2Common;
-using namespace std::chrono;
-
-class D2VINSNode : public D2FrontEnd::D2Frontend {
+class D2VINSNode : public D2FrontEnd::D2Frontend { // 使用继承扩展了前端功能，增加了分布式VINS的功能
 public:
   void stopAllThread(){
     thread_viokf_running = false;
@@ -250,7 +249,7 @@ private:
     }
   }
 
-  void Init(ros::NodeHandle &nh) {
+  void Init(ros::NodeHandle &nh) { // 节点初始化
     D2Frontend::Init(nh);
     initParams(nh);
     estimator = new D2Estimator(params->self_id);
@@ -309,8 +308,8 @@ private:
 };
 
 int main(int argc, char **argv) {
-  spdlog::set_pattern("[%H:%M:%S][%^%l%$][%s,%!,L%#] %v");
-  cv::setNumThreads(1);
+  spdlog::set_pattern("[%H:%M:%S][%^%l%$][%s,%!,L%#] %v"); // 设置每条日志消息格式（时间，级别，源文件，汉书，行号，实际的日志消息）
+  cv::setNumThreads(1); // opencv线程数量设为1，可能导致性能下降
   ros::init(argc, argv, "d2vins");
   ros::NodeHandle n("~");
   ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,

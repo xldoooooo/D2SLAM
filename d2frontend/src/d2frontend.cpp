@@ -296,11 +296,11 @@ void D2Frontend::onRemoteFrameROS(
 
 D2Frontend::D2Frontend() {}
 
-void D2Frontend::Init(ros::NodeHandle &nh) {
+void D2Frontend::Init(ros::NodeHandle &nh) { // D2Frontend节点初始化
   // Init Loop Net
-  params = new D2FrontendParams(nh);
+  params = new D2FrontendParams(nh); // 初始化参数
   it_ = new image_transport::ImageTransport(nh);
-  cv::setNumThreads(1);
+  cv::setNumThreads(1); // 限制 OpenCV 的线程数为 1，以提高程序的稳定性和避免线程竞争
 
   loop_cam = new LoopCam(*(params->loopcamconfig), nh);
   feature_tracker = new D2FeatureTracker(*(params->ftconfig));
@@ -383,6 +383,7 @@ void D2Frontend::Init(ros::NodeHandle &nh) {
         boost::bind(&D2Frontend::depthImagesCallback, this, _1, _2));
   } else if (params->camera_configuration == CameraConfig::FOURCORNER_FISHEYE) {
     // Default we accept only horizon-concated image
+    // 订阅image0_topic
     image_sub_single =
         it_->subscribe(params->image_topics[0], 10,
                        &D2Frontend::monoImageCallback, this, hints);
@@ -392,19 +393,19 @@ void D2Frontend::Init(ros::NodeHandle &nh) {
 
   loopconn_pub = nh.advertise<swarm_msgs::LoopEdge>("loop", 10);
 
-  if (params->enable_sub_remote_frame) {
+  if (params->enable_sub_remote_frame) { // 默认不执行
     SPDLOG_INFO("Subscribing remote image from bag");
     remote_img_sub = nh.subscribe("/swarm_loop/remote_frame_desc", 1,
                                   &D2Frontend::onRemoteFrameROS, this,
                                   ros::TransportHints().tcpNoDelay());
   }
 
-  if (params->enable_pub_remote_frame) {
+  if (params->enable_pub_remote_frame) { // 默认不执行
     remote_image_desc_pub =
         nh.advertise<swarm_msgs::ImageArrayDescriptor>("remote_frame_desc", 10);
   }
 
-
+  // 创建智能指针，用于存储线程的速率对象，进而控制频率
   stereo_frame_thread_rate_ptr_ = std::make_unique<ros::Rate>(params->ftconfig->stereo_frame_thread_rate); 
   loop_detection_thread_rate_ptr_ = std::make_unique<ros::Rate>(params->ftconfig->loop_detection_thread_rate);
   lcm_thread_rate_ptr_ = std::make_unique<ros::Rate>(params->ftconfig->lcm_thread_rate);

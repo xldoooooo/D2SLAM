@@ -113,11 +113,14 @@ protected:
 
     void startThread(){
         stereo_frame_thread_running_ = true;
+        // 处理立体帧线程
         stereo_frame_thread_ = std::thread(&D2Frontend::processStereoFrameThread, this);
-        loop_detection_thread_running_ = true;
         if (params->enable_loop)
         {
+            // 处理回环检测线程
+            loop_detection_thread_running_ = true;
             loop_detection_thread_ = std::thread(&D2Frontend::loopDetectionThread, this);
+            // 处理lcm线程
             lcm_thread_running_ = true;
             lcm_thread_ = std::thread(&D2Frontend::lcmThread, this);
         }

@@ -1,10 +1,8 @@
 #!/bin/bash
-# Usage: ./start_ffc_4p_docker.sh  0 to start docker with current file-dir, anything you modify in docker will be saved in current file-dir
-# Usage: ./start_ffc_4p_docker.sh  1 to start docker only for image transportation.
 # Please do not move this file to other dir, it will cause the docker container can not find the current dir.
 SWARM_WS=/root/swarm_ws
-DOCKERIMAGE="hkustswarm/d2slam:jetson_orin"
-DATA_SET=/home/dji/dataset
+DOCKERIMAGE="d2slam:x86"
+DATA_SET=/home/xld/dataset
 if [ $# -eq 0 ]; then
   echo "[INFO] No start option, will start docker container only for application"
   START_OPTION=0

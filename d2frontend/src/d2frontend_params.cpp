@@ -17,7 +17,7 @@ namespace D2FrontEnd {
 D2FrontendParams* params;
 
 D2FrontendParams::D2FrontendParams(ros::NodeHandle& nh) {
-  // Read VINS params.
+  // Read VINS params from quadcam_single.yaml
   nh.param<std::string>("vins_config_path", vins_config_path, "");
   cv::FileStorage fsSettings;
   printf("Read VINS config from %s\n", vins_config_path.c_str());
@@ -26,17 +26,19 @@ D2FrontendParams::D2FrontendParams(ros::NodeHandle& nh) {
   int pn = vins_config_path.find_last_of('/');
   std::string configPath = vins_config_path.substr(0, pn);
 
+  // 定义三个结构体
   loopcamconfig = new LoopCamConfig;
   loopdetectorconfig = new LoopDetectorConfig;
   ftconfig = new D2FTConfig;
 
-  // Basic confi
+  // Basic config
   nh.param<int>("self_id", self_id, -1);
-  int _camconfig = fsSettings["camera_configuration"];
-  camera_configuration = (CameraConfig)_camconfig;
+  int _camconfig = fsSettings["camera_configuration"]; // 相机类型
+  camera_configuration = (CameraConfig)_camconfig; // 将整数转为枚举类型 
+  estimation_mode = (ESTIMATION_MODE)(int)fsSettings["estimation_mode"];
   nh.param<double>("nonkeyframe_waitsec", ACCEPT_NONKEYFRAME_WAITSEC, 5.0);
   nh.param<double>("min_movement_keyframe", min_movement_keyframe, 0.3);
-  estimation_mode = (ESTIMATION_MODE)(int)fsSettings["estimation_mode"];
+  
 
   //frontend settings
   

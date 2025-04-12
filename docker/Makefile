@@ -11,6 +11,9 @@ help:
 
 amd64:
 	@docker build  -t hkustswarm/d2slam:x86 -f ./Dockerfile.x86 ..
+	
+amd64_xld:
+	@docker build  -t d2slam:x86 -f ./Dockerfile.x86_xld ..
 
 amd64_no_cuda:
 	@docker build  -t hkustswarm/d2slam:x86_no_cuda -f ./Dockerfile.x86_no_cuda ..
