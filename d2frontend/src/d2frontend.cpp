@@ -157,10 +157,10 @@ void D2Frontend::processStereoFrameThread() {
   prctl(PR_SET_NAME, "D2FrontendStereoFrame", 0, 0, 0);
   while (stereo_frame_thread_running_) {
     if (stereo_frame_buffer_lock_.try_lock()) {
-      if (stereo_frame_q_.size() > 0) {
-        auto sframe = stereo_frame_q_.front();
+      if (stereo_frame_q_.size() > 0) { // 如果立体帧队列不为空
+        auto sframe = stereo_frame_q_.front(); // 取出第一个立体帧
         stereo_frame_q_.pop();
-        processStereoframe(*sframe);
+        processStereoframe(*sframe); // 处理立体帧
       }
       stereo_frame_buffer_lock_.unlock();
     }

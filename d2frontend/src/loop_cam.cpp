@@ -222,7 +222,7 @@ VisualImageDescArray LoopCam::processStereoframe(const StereoFrame &msg) {
         visual_array.images.push_back(_imgs[1]);
       }
     } else if (camera_configuration == CameraConfig::FOURCORNER_FISHEYE) {
-      auto seq = params->camera_seq[i];
+      auto seq = params->camera_seq[i]; // 【0, 1, 2, 3】
       visual_array.images[seq] = generateImageDescriptor(msg, i, tmp);
     }
 
